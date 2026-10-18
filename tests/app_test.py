@@ -1,21 +1,25 @@
 import json
+import os
 import pytest
 from pathlib import Path
 
-from project.app import app, init_db
-
 TEST_DB = "test.db"
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# point the app at the test db before it gets imported
+os.environ["DATABASE_URL"] = f"sqlite:///{BASE_DIR.joinpath(TEST_DB)}"
+
+from project.app import app, db
 
 
 @pytest.fixture
 def client():
-    BASE_DIR = Path(__file__).resolve().parent.parent
     app.config["TESTING"] = True
-    app.config["DATABASE"] = BASE_DIR.joinpath(TEST_DB)
 
-    init_db()  # setup
-    yield app.test_client()  # tests run here
-    init_db()  # teardown
+    with app.app_context():
+        db.create_all()  # setup
+        yield app.test_client()  # tests run here
+        db.drop_all()  # teardown
 
 
 def login(client, username, password):
