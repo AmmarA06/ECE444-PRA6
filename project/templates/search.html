@@ -51,7 +51,12 @@
         {% for entry in entries %} {% if query.lower() in entry.title.lower() or
         query.lower() in entry.text.lower() %}
         <li class="entry">
-          <h2 id="{{ entry.id }}">{{ entry.title }}</h2>
+          <div class="d-flex align-items-center gap-2">
+            <h2>{{ entry.title }}</h2>
+            {% if session.logged_in %}
+            <button type="button" class="btn-close delete-entry" data-id="{{ entry.id }}" aria-label="Delete"></button>
+            {% endif %}
+          </div>
           {{ entry.text|safe }}
         </li>
         {% endif %} {% endfor %}

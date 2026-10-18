@@ -138,3 +138,16 @@ def test_search_results(client):
     rv = client.get("/search/?query=milk")
     assert b"Groceries" in rv.data
     assert b"Flask tips" not in rv.data
+
+
+def test_delete_button_only_when_logged_in(client):
+    """Delete icon shows next to posts only for logged in users"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post("/add", data=dict(title="Hello", text="world"))
+    rv = client.get("/")
+    assert b'class="btn-close delete-entry" data-id="1"' in rv.data
+    rv = client.get("/search/?query=hello")
+    assert b'class="btn-close delete-entry" data-id="1"' in rv.data
+    logout(client)
+    rv = client.get("/")
+    assert b"delete-entry" not in rv.data
