@@ -83,3 +83,25 @@ def test_delete_message(client):
     rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
+
+
+def test_search_page(client):
+    """Search page loads and is linked from the index"""
+    rv = client.get("/search/")
+    assert rv.status_code == 200
+    assert b"Search:" in rv.data
+    rv = client.get("/")
+    assert b'href="/search/"' in rv.data
+
+
+def test_search_results(client):
+    """Search only returns posts matching the query, ignoring case"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post("/add", data=dict(title="Flask tips", text="use blueprints"))
+    client.post("/add", data=dict(title="Groceries", text="eggs and milk"))
+    rv = client.get("/search/?query=FLASK")
+    assert b"Flask tips" in rv.data
+    assert b"Groceries" not in rv.data
+    rv = client.get("/search/?query=milk")
+    assert b"Groceries" in rv.data
+    assert b"Flask tips" not in rv.data
