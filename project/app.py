@@ -15,8 +15,9 @@ PASSWORD = "admin"
 SECRET_KEY = os.getenv("SECRET_KEY", "change_me")
 url = os.getenv("DATABASE_URL", f"sqlite:///{Path(basedir).joinpath(DATABASE)}")
 
-if url.startswith("postgres://"):
-    url = url.replace("postgres://", "postgresql://", 1)
+# heroku/render style urls use postgres://, and sqlalchemy 2.1 defaults to psycopg3
+if url.startswith(("postgres://", "postgresql://")):
+    url = "postgresql+psycopg2://" + url.split("://", 1)[1]
 
 SQLALCHEMY_DATABASE_URI = url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
