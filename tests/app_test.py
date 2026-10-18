@@ -82,7 +82,40 @@ def test_delete_message(client):
     """Ensure the messages are being deleted"""
     rv = client.get("/delete/1")
     data = json.loads(rv.data)
+    assert data["status"] == 0
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
     assert data["status"] == 1
+
+
+def test_delete_requires_login(client):
+    """Logged out users get a 401 and the post is kept"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post("/add", data=dict(title="Keep me", text="still here"))
+    logout(client)
+    rv = client.get("/delete/1")
+    assert rv.status_code == 401
+    assert json.loads(rv.data)["message"] == "Please log in."
+    rv = client.get("/")
+    assert b"Keep me" in rv.data
+
+
+def test_delete_removes_post(client):
+    """Logged in users can delete a post and it disappears from the index"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post("/add", data=dict(title="Delete me", text="bye"))
+    rv = client.get("/delete/1")
+    assert rv.status_code == 200
+    rv = client.get("/")
+    assert b"Delete me" not in rv.data
+    assert b"No entries yet. Add some!" in rv.data
+
+
+def test_add_requires_login(client):
+    """Posting without logging in is rejected"""
+    rv = client.post("/add", data=dict(title="Nope", text="nope"))
+    assert rv.status_code == 401
 
 
 def test_search_page(client):
